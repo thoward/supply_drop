@@ -21,12 +21,32 @@ namespace :puppet do
       end
     end
 
-    desc "installs puppet via yum on a centos/red hat host"
+    desc "installs puppet via yum on a centos/redhat host"
     task :redhat do
 
       on roles fetch(:puppet_roles) do
         execute :mkdir, "-p #{fetch(:puppet_destination)}"
         sudo :yum, "-y install puppet rsync"
+      end
+    end
+
+    desc "installs puppet via yum on an amazon linux host"
+    task :amazon do
+
+      on roles fetch(:puppet_roles) do
+        execute :mkdir, "-p #{fetch(:puppet_destination)}"
+        sudo :yum, "-y install puppet rsync"
+
+        # currently, amazon's yum repo installs facter 1.6.18 which has 
+        # incorrect reporting for amazon linux's os family causing many 
+        # packages to fail to install. facter 1.7 fixes this, but needs 
+        # a special repo install and manual dependency installs
+        # if the amazon repo gets updated to 1.7, this will be obsolete 
+        # and the puppet:bootstrap:redhat task can be used instead.
+        sudo :yum, "-y install virt-what"
+        sudo :yum, "-y install pciutils"
+        sudo :rpm, "-ivh --replacepkgs http://yum.puppetlabs.com/el/6/products/$(arch)/puppetlabs-release-6-7.noarch.rpm"
+        sudo :yum, "--disablerepo=* --enablerepo=puppetlabs-products install facter"
       end
     end
 
