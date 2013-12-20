@@ -37,7 +37,7 @@ namespace :puppet do
         execute :mkdir, "-p #{fetch(:puppet_destination)}"
         sudo :yum, "-y install puppet rsync virt-what pciutils"
 
-        sudo :rpm, "-ivh --replacepkgs http://yum.puppetlabs.com/el/6/products/$(arch)/puppetlabs-release-6-7.noarch.rpm"
+        sudo :rpm, "-i --quiet --replacepkgs http://yum.puppetlabs.com/el/6/products/$(arch)/puppetlabs-release-6-7.noarch.rpm"
 
         # currently, amazon's yum repo installs facter 1.6.18 which has 
         # incorrect reporting for amazon linux's os family causing many 
