@@ -26,6 +26,7 @@ namespace :puppet do
 
       on roles fetch(:puppet_roles) do
         execute :mkdir, "-p #{fetch(:puppet_destination)}"
+        sudo :rpm, "-i --quiet --replacepkgs http://yum.puppetlabs.com/el/6/products/$(arch)/puppetlabs-release-6-7.noarch.rpm"
         sudo :yum, "-y install puppet rsync"
       end
     end
