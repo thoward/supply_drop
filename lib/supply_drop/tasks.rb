@@ -27,7 +27,8 @@ namespace :puppet do
       on roles fetch(:puppet_roles) do
         execute :mkdir, "-p #{fetch(:puppet_destination)}"
         sudo :rpm, "-i --quiet --replacepkgs http://yum.puppetlabs.com/el/6/products/$(arch)/puppetlabs-release-6-7.noarch.rpm"
-        sudo :yum, "-y install puppet rsync"
+        sudo :yum, "-y install rsync"
+        sudo :yum, "-y install puppet --noplugins"
       end
     end
 
@@ -36,9 +37,17 @@ namespace :puppet do
 
       on roles fetch(:puppet_roles) do
         execute :mkdir, "-p #{fetch(:puppet_destination)}"
-        sudo :yum, "-y install puppet rsync virt-what pciutils"
+        sudo :yum, "-y install rsync virt-what pciutils"
 
         sudo :rpm, "-i --quiet --replacepkgs http://yum.puppetlabs.com/el/6/products/$(arch)/puppetlabs-release-6-7.noarch.rpm"
+
+        # installs the latest version of puppet from the puppetlabs yum repo
+        # it's necessary to add --noplugins to disable the yum-priorities plugin
+        # so that the newer versions of puppet can be installed from the puppetlabs repo
+        # instead of being overridden by the epel version. Could also configure 
+        # yum priorities, via editing /etc/yum.repos.d/epel.repo but this way 
+        # doesn't require a conf file edit and functions equivalently
+        sudo :yum, "-y --enablerepo=puppetlabs-products install puppet --noplugins"
 
         # currently, amazon's yum repo installs facter 1.6.18 which has 
         # incorrect reporting for amazon linux's os family causing many 
