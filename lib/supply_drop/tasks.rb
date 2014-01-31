@@ -25,10 +25,30 @@ namespace :puppet do
     task :redhat do
 
       on roles fetch(:puppet_roles) do
+
+        puppet_version = fetch(:puppet_version)
+        if puppet_version == "latest"
+          puppet_version = ""
+        else
+          puppet_version = "-#{puppet_version}" if not puppet_version.start_with? "-"
+        end
+
+        facter_version = fetch(:facter_version)
+        if facter_version == "latest"
+          facter_version = ""
+        else
+          facter_version = "-#{facter_version}" if not facter_version.start_with? "-"
+        end
+        info "installing versions; puppet: #{puppet_version} facter: #{facter_version}"        
+
         execute :mkdir, "-p #{fetch(:puppet_destination)}"
+
         sudo :rpm, "-i --quiet --replacepkgs http://yum.puppetlabs.com/el/6/products/$(arch)/puppetlabs-release-6-7.noarch.rpm"
+
         sudo :yum, "-y install rsync"
-        sudo :yum, "-y install puppet --noplugins"
+        sudo :yum, "-y --enablerepo=puppetlabs-products install puppet#{puppet_version} --noplugins"
+        sudo :yum, "-y --disablerepo=* --enablerepo=puppetlabs-products install facter#{facter_version} --noplugins"
+
       end
     end
 
@@ -36,7 +56,22 @@ namespace :puppet do
     task :amazon do
 
       on roles fetch(:puppet_roles) do
-        execute :mkdir, "-p #{fetch(:puppet_destination)}"
+
+        puppet_version = fetch(:puppet_version)
+        if puppet_version == "latest"
+          puppet_version = ""
+        else
+          puppet_version = "-#{puppet_version}" if not puppet_version.start_with? "-"
+        end
+
+        facter_version = fetch(:facter_version)
+        if facter_version == "latest"
+          facter_version = ""
+        else
+          facter_version = "-#{facter_version}" if not facter_version.start_with? "-"
+        end
+        
+        sudo :mkdir, "-p #{fetch(:puppet_destination)}"
         sudo :yum, "-y install rsync virt-what pciutils"
 
         sudo :rpm, "-i --quiet --replacepkgs http://yum.puppetlabs.com/el/6/products/$(arch)/puppetlabs-release-6-7.noarch.rpm"
@@ -47,7 +82,7 @@ namespace :puppet do
         # instead of being overridden by the epel version. Could also configure 
         # yum priorities, via editing /etc/yum.repos.d/epel.repo but this way 
         # doesn't require a conf file edit and functions equivalently
-        sudo :yum, "-y --enablerepo=puppetlabs-products install puppet --noplugins"
+        sudo :yum, "-y --enablerepo=puppetlabs-products install puppet#{puppet_version} --noplugins"
 
         # currently, amazon's yum repo installs facter 1.6.18 which has 
         # incorrect reporting for amazon linux's os family causing many 
@@ -55,7 +90,7 @@ namespace :puppet do
         # a special repo install and manual dependency installs
         # if the amazon repo gets updated to 1.7, this will be obsolete 
         # and the puppet:bootstrap:redhat task can be used instead.
-        sudo :yum, "-y --disablerepo=* --enablerepo=puppetlabs-products install facter"
+        sudo :yum, "-y --disablerepo=* --enablerepo=puppetlabs-products install facter#{facter_version}"
       end
     end
 
@@ -262,5 +297,7 @@ namespace :load do
     set :puppet_syntax_check, false
     set :puppet_runner, nil
     set :puppet_lock_file, '/tmp/puppet.lock'
+    set :puppet_version, '2.7.23'
+    set :facter_version, '1.7.4'
   end
 end
